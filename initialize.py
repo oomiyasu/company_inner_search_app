@@ -19,7 +19,9 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import Chroma
 import constants as ct
-
+#【問題6】
+from langchain.schema import Document
+import csv
 
 ############################################################
 # 設定関連
@@ -123,21 +125,36 @@ def initialize_retriever():
     
     # チャンク分割用のオブジェクトを作成
     text_splitter = CharacterTextSplitter(
-        chunk_size=500,
-        chunk_overlap=50,
+    #    chunk_size=500,
+    #    chunk_overlap=50,
+    #【問題2】
+        chunk_size=ct.CHUNK_SIZE,
+        chunk_overlap=ct.CHUNK_OVERLAP,
         separator="\n"
     )
 
     # チャンク分割を実施
-    splitted_docs = text_splitter.split_documents(docs_all)
+#    splitted_docs = text_splitter.split_documents(docs_all)
+#【問題6】
+     # CSVファイルは1ドキュメントにまとめた状態で保持し、他のファイルのみチャンク分割を行う
+    splitted_docs = []
+    for doc in docs_all:
+        source = doc.metadata.get("source", "").lower()
+        if source.endswith(".csv"):
+            splitted_docs.append(doc)
+        else:
+            splitted_docs.extend(text_splitter.split_documents([doc]))
 
     # ベクターストアの作成
     db = Chroma.from_documents(splitted_docs, embedding=embeddings)
 
     # ベクターストアを検索するRetrieverの作成
-    st.session_state.retriever = db.as_retriever(search_kwargs={"k": 3})
-
-
+    #【問題1】
+    #st.session_state.retriever = db.as_retriever(search_kwargs={"k": 3})
+    #st.session_state.retriever = db.as_retriever(search_kwargs={"k": 5})
+    #【問題2】
+    st.session_state.retriever = db.as_retriever(search_kwargs={"k": ct.RETRIEVER_K})
+    
 def initialize_session_state():
     """
     初期化データの用意
@@ -217,6 +234,20 @@ def file_load(path, docs_all):
         # ファイルの拡張子に合ったdata loaderを使ってデータ読み込み
         loader = ct.SUPPORTED_EXTENSIONS[file_extension](path)
         docs = loader.load()
+#【問題6】
+        # CSVファイルの場合、行ごとに分割されたドキュメントを1つにまとめ、検索精度を高める
+        if file_extension == ".csv":
+            # CSVファイルを読み込み、行データから主要項目のみを抽出してテキスト化
+            with open(path, encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                rows = []
+                for row in reader:
+                    row_text = f"社員ID:{row.get('社員ID','')} 氏名:{row.get('氏名（フルネーム）','')} 性別:{row.get('性別','')} 生年月日:{row.get('生年月日','')} 年齢:{row.get('年齢','')} メールアドレス:{row.get('メールアドレス','')} 従業員区分:{row.get('従業員区分','')} 入社日:{row.get('入社日','')} 部署:{row.get('部署','')} 役職:{row.get('役職','')}" \
+                        f" スキルセット:{row.get('スキルセット','')} 保有資格:{row.get('保有資格','')} 大学名:{row.get('大学名','')} 学部・学科:{row.get('大学部・学科','')} 卒業年月日:{row.get('卒業年月日','')}"
+                    rows.append(row_text)
+            joined = "\n".join(rows)
+            docs = [Document(page_content=joined, metadata={"source": path})]
+
         docs_all.extend(docs)
 
 

@@ -20,10 +20,13 @@ APP_NAME = "社内情報特化型生成AI検索アプリ"
 ANSWER_MODE_1 = "社内文書検索"
 ANSWER_MODE_2 = "社内問い合わせ"
 CHAT_INPUT_HELPER_TEXT = "こちらからメッセージを送信してください。"
-DOC_SOURCE_ICON = ":material/description: "
-LINK_SOURCE_ICON = ":material/link: "
-WARNING_ICON = ":material/warning:"
-ERROR_ICON = ":material/error:"
+DOC_SOURCE_ICON = ":material/description:"
+#LINK_SOURCE_ICON = ":material/link:"
+#WARNING_ICON = ":material/warning:"
+#ERROR_ICON = ":material/error:"
+LINK_SOURCE_ICON = "🔗"  # link icon
+WARNING_ICON = "⚠️"   # warning icon
+ERROR_ICON = "❌"    # error ico
 SPINNER_TEXT = "回答生成中..."
 
 
@@ -50,12 +53,22 @@ RAG_TOP_FOLDER_PATH = "./data"
 SUPPORTED_EXTENSIONS = {
     ".pdf": PyMuPDFLoader,
     ".docx": Docx2txtLoader,
-    ".csv": lambda path: CSVLoader(path, encoding="utf-8")
+#    ".csv": lambda path: CSVLoader(path, encoding="utf-8")
+#【問題5】
+    ".csv": lambda path: CSVLoader(path, encoding="utf-8"),
+    ".txt": lambda path: TextLoader(path, encoding="utf-8")
 }
 WEB_URL_LOAD_TARGETS = [
     "https://generative-ai.web-camp.io/"
 ]
 
+# ==========================================
+# RAG設定
+# ==========================================
+#【問題2】
+CHUNK_SIZE = 500
+CHUNK_OVERLAP = 50
+RETRIEVER_K = 5
 
 # ==========================================
 # プロンプトテンプレート
