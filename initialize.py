@@ -27,7 +27,13 @@ import csv
 # 設定関連
 ############################################################
 # 「.env」ファイルで定義した環境変数の読み込み
-load_dotenv()
+#load_dotenv()
+if os.getenv("ENVIRONMENT", "development") == "development":
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except ImportError:
+        st.warning("ローカル環境で .env を読み込めませんでした。`python-dotenv` をインストールしてください。")
 
 
 ############################################################
